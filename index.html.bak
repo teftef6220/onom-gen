@@ -169,10 +169,8 @@
             </div>
         </a>
     </div>
-    <div class="filter-controls" style="margin-bottom: 1rem;">
-        <input type="text" id="searchInput" placeholder="Search sketches by name ..." style="width: 100%; padding: 0.8rem 1rem; background-color: #2a2a2a; border: 1px solid #444; border-radius: 4px; color: #eee; font-size: 1rem; box-sizing: border-box;">
-    </div>
     <ul>
+        <li><a href="sketch000.html"><span class="title">Strange Attractors</span><span class="filename">sketch000.html</span></a></li>
         <li><a href="sketch001.html"><span class="title">Bento Grid Pop</span><span class="filename">sketch001.html</span></a></li>
         <li><a href="sketch002.html"><span class="title">Wim Crouwel Style Sketch Preview</span><span class="filename">sketch002.html</span></a></li>
         <li><a href="sketch003.html"><span class="title">DIA Studio Style Sketch Preview</span><span class="filename">sketch003.html</span></a></li>
@@ -218,30 +216,6 @@
         <li><a href="sketch043.html"><span class="title">Slime Mold Simulation</span><span class="filename">sketch043.html</span></a></li>
         <li><a href="sketch044.html"><span class="title">Utilitarian UI</span><span class="filename">sketch044.html</span></a></li>
         <li><a href="sketch045.html"><span class="title">Sketch Preview</span><span class="filename">sketch045.html</span></a></li>
-        <li><a href="sketch046.html"><span class="title">Strange Attractors</span><span class="filename">sketch046.html</span></a></li>
-        <li><a href="sketch047.html"><span class="title">Geometric Interference</span><span class="filename">sketch047.html</span></a></li>
     </ul>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('searchInput');
-            const sketchList = document.querySelector('ul');
-            const sketches = sketchList.querySelectorAll('li');
-
-            searchInput.addEventListener('keyup', function(e) {
-                const searchTerm = e.target.value.toLowerCase();
-
-                sketches.forEach(function(sketch) {
-                    const title = sketch.querySelector('.title').textContent.toLowerCase();
-                    const filename = sketch.querySelector('.filename').textContent.toLowerCase();
-                    
-                    if (title.includes(searchTerm) || filename.includes(searchTerm)) {
-                        sketch.style.display = ''; // Reset to default (grid item)
-                    } else {
-                        sketch.style.display = 'none';
-                    }
-                });
-            });
-        });
-    </script>
 </body>
 </html>
