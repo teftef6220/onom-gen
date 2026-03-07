@@ -2,7 +2,6 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import GUI from 'lil-gui';
 import { createNoise3D } from 'simplex-noise';
 
 const params = {
@@ -36,7 +35,6 @@ let particles, geometry, material;
 let positions, colors, velocities;
 let noise3D;
 let time = 0;
-let gui;
 
 // 書き出し用変数
 let isExporting = false;
@@ -123,7 +121,6 @@ function init() {
   noise3D = createNoise3D();
 
   initParticles();
-  createGUI();
 }
 
 function initParticles() {
@@ -379,32 +376,4 @@ function saveFrame() {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-}
-
-function createGUI() {
-  gui = new GUI();
-  const processConfig = (config, parent) => {
-    config.forEach(item => {
-      if (item.folder) {
-        const folder = parent.addFolder(item.folder);
-        processConfig(item.contents, folder);
-      } else {
-        let controller;
-        if (item.type === 'color') {
-          controller = parent.addColor(item.object, item.variable).name(item.name);
-        } else if (item.type === 'function') {
-          controller = parent.add(item.object, item.variable).name(item.name);
-        } else if (item.options) {
-          controller = parent.add(item.object, item.variable, item.options).name(item.name);
-        } else {
-          controller = parent.add(item.object, item.variable, item.min, item.max, item.step).name(item.name);
-        }
-        if (item.onChange) controller.onChange(item.onChange);
-        if (item.onFinishChange) controller.onFinishChange(item.onFinishChange);
-      }
-    });
-  };
-  if (window.guiConfig) {
-    processConfig(window.guiConfig, gui);
-  }
 }

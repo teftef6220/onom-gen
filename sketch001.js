@@ -20,7 +20,6 @@ const params = {
   regenerate: () => generateBento(true)
 };
 
-let gui;
 let boxes = [];
 let time = 0;
 

@@ -41,7 +41,6 @@ const params = {
 
 let particles = [];
 let textPoints = [];
-let gui;
 
 window.guiConfig = [
   { folder: 'Generator', contents: [
@@ -107,7 +106,6 @@ function setup() {
 
   colorMode(HSB, 360, 100, 100, 100);
   updateTextPoints();
-  createGUI();
 }
 
 function updateTextPoints() {
@@ -378,36 +376,4 @@ function startExport() {
 
 function keyPressed() {
   if (key === 's' || key === 'S') startExport();
-}
-
-function createGUI() {
-  gui = new lil.GUI();
-  gui.domElement.style.position = 'absolute';
-  gui.domElement.style.top = '0px';
-  gui.domElement.style.right = '0px';
-  const processConfig = (config, parent) => {
-    config.forEach(item => {
-      if (item.folder) {
-        const folder = parent.addFolder(item.folder);
-        processConfig(item.contents, folder);
-      } else {
-        let controller;
-        if (item.type === 'color') {
-          controller = parent.addColor(item.object, item.variable).name(item.name);
-        } else if (item.type === 'function') {
-          controller = parent.add(item.object, item.variable).name(item.name);
-        } else if (item.options) {
-          controller = parent.add(item.object, item.variable, item.options).name(item.name);
-        } else {
-          controller = parent.add(item.object, item.variable, item.min, item.max, item.step).name(item.name);
-        }
-        if (item.onChange) controller.onChange(item.onChange);
-        if (item.onFinishChange) controller.onFinishChange(item.onFinishChange);
-        if (item.listen) controller.listen();
-      }
-    });
-  };
-  if (window.guiConfig) {
-    processConfig(window.guiConfig, gui);
-  }
 }

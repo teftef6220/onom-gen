@@ -45,7 +45,6 @@ window.guiConfig = [
   ]}
 ];
 
-let gui;
 let shapes = [];
 let noiseLines = [];
 let time = 0;
@@ -83,7 +82,6 @@ function setup() {
   textStyle(BOLD);
   
   generate();
-  createGUI();
 }
 
 function generate() {
@@ -482,38 +480,4 @@ function startExport() {
   for (let i = 0; i < 4; i++) exportSessionID += chars.charAt(floor(random(chars.length)));
   
   console.log(`Export started: ${exportSessionID}`);
-}
-
-function keyPressed() {
-  if (key === 's' || key === 'S') startExport();
-  if (key === 'r' || key === 'R') generate();
-}
-
-function createGUI() {
-  gui = new lil.GUI();
-  const processConfig = (config, parent) => {
-    config.forEach(item => {
-      if (item.folder) {
-        const folder = parent.addFolder(item.folder);
-        processConfig(item.contents, folder);
-      } else {
-        let controller;
-        if (item.type === 'color') {
-          controller = parent.addColor(item.object, item.variable).name(item.name);
-        } else if (item.type === 'function') {
-          controller = parent.add(item.object, item.variable).name(item.name);
-        } else if (item.options) {
-          controller = parent.add(item.object, item.variable, item.options).name(item.name);
-        } else {
-          controller = parent.add(item.object, item.variable, item.min, item.max, item.step).name(item.name);
-        }
-        if (item.onChange) controller.onChange(item.onChange);
-        if (item.onFinishChange) controller.onFinishChange(item.onFinishChange);
-        if (item.listen) controller.listen();
-      }
-    });
-  };
-  if (window.guiConfig) {
-    processConfig(window.guiConfig, gui);
-  }
 }

@@ -20,7 +20,6 @@ const params = {
   exportStart: () => startExport()
 };
 
-let gui;
 let shapes = [];
 let time = 0;
 
@@ -53,7 +52,6 @@ function setup() {
   strokeJoin(ROUND);
 
   initGrid();
-  createGUI();
 }
 
 function initGrid() {
@@ -249,33 +247,4 @@ function startExport() {
 function keyPressed() {
   if (key === 's' || key === 'S') startExport();
   if (key === 'r' || key === 'R') initGrid();
-}
-
-function createGUI() {
-  gui = new lil.GUI();
-  const processConfig = (config, parent) => {
-    config.forEach(item => {
-      if (item.folder) {
-        const folder = parent.addFolder(item.folder);
-        processConfig(item.contents, folder);
-      } else {
-        let controller;
-        if (item.type === 'color') {
-          controller = parent.addColor(item.object, item.variable).name(item.name);
-        } else if (item.type === 'function') {
-          controller = parent.add(item.object, item.variable).name(item.name);
-        } else if (item.options) {
-          controller = parent.add(item.object, item.variable, item.options).name(item.name);
-        } else {
-          controller = parent.add(item.object, item.variable, item.min, item.max, item.step).name(item.name);
-        }
-        if (item.onChange) controller.onChange(item.onChange);
-        if (item.onFinishChange) controller.onFinishChange(item.onFinishChange);
-        if (item.listen) controller.listen();
-      }
-    });
-  };
-  if (window.guiConfig) {
-    processConfig(window.guiConfig, gui);
-  }
 }

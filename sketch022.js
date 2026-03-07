@@ -38,7 +38,6 @@ let bloomFilter;
 let container;
 let particleTexture;
 let targetPoints = [];
-let gui;
 let mouseX = -1000;
 let mouseY = -1000;
 let time = 0;
@@ -110,7 +109,6 @@ function init() {
   createTarget();
   initRepellers();
   initParticles();
-  createGUI();
 
   app.ticker.add((delta) => {
     if (!isExporting) {

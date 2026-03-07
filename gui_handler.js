@@ -65,6 +65,22 @@
             if (val === 'false') val = false;
             
             target[config.variable] = val;
+
+            // URLからの反映時にもonChange/onFinishChangeを発火させる
+            if (config.onChange) {
+              try {
+                config.onChange(val);
+              } catch (e) {
+                console.warn(`gui_handler: Failed to trigger onChange for ${config.variable}`, e);
+              }
+            }
+            if (config.onFinishChange) {
+              try {
+                config.onFinishChange(val);
+              } catch (e) {
+                console.warn(`gui_handler: Failed to trigger onFinishChange for ${config.variable}`, e);
+              }
+            }
           }
 
           if (target[config.variable] === undefined && config.type !== 'function') {
