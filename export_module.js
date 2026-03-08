@@ -3,7 +3,7 @@ class ExportModule {
     this.isExporting = false;
     this.exportCount = 0;
     this.exportMax = 0;
-    this.fps = 30;
+    this.fps = 24;
     this.mode = null; // 'MP4' or 'PNG'
 
     // MP4 specific
@@ -14,6 +14,7 @@ class ExportModule {
     // PNG specific
     this.exportDirHandle = null;
     this.filenamePrefix = "frame";
+    this.pendingFrames = 0; // 追加
   }
 
   /**
@@ -22,10 +23,14 @@ class ExportModule {
   async startMP4(width, height, fps, totalFrames, suggestedName) {
     if (this.isExporting) return;
 
+    // 解像度を偶数に強制（H.264の制限で奇数はファイルが壊れるため）
+    const exportW = Math.floor(width / 2) * 2;
+    const exportH = Math.floor(height / 2) * 2;
+
     try {
       if (window.showSaveFilePicker) {
         const opts = {
-          types: [{ description: 'MP4 Video', accept: {'video/mp4': ['.mp4']} }],
+          types: [{ description: 'MP4 Video', accept: { 'video/mp4': ['.mp4'] } }],
           suggestedName: suggestedName
         };
         this.exportFileHandle = await window.showSaveFilePicker(opts);
@@ -39,24 +44,34 @@ class ExportModule {
 
     this.muxer = new Mp4Muxer.Muxer({
       target: new Mp4Muxer.ArrayBufferTarget(),
-      video: { codec: 'avc', width: width, height: height },
+      video: { codec: 'avc', width: exportW, height: exportH },
       fastStart: 'in-memory'
     });
 
     this.videoEncoder = new VideoEncoder({
       output: (chunk, meta) => this.muxer.addVideoChunk(chunk, meta),
-      error: e => console.error(e)
+      error: e => {
+        console.error("VideoEncoder Error:", e);
+        alert("動画のエンコードに失敗しました: " + e.message);
+      }
     });
 
-    this.videoEncoder.configure({
-      codec: 'avc1.4d002a',
-      width: width,
-      height: height,
-      bitrate: 20_000_000,
-      framerate: fps
-    });
+    try {
+      this.videoEncoder.configure({
+        codec: 'avc1.4D4033', // レベル5.1（4K対応などの高解像度・高ビットレート用）
+        width: exportW,
+        height: exportH,
+        bitrate: 10_000_000,
+        framerate: fps
+      });
+    } catch (e) {
+      console.error("VideoEncoder.configure failed:", e);
+      alert("エンコーダーの設定に失敗しました: " + e.message);
+      this.isExporting = false;
+      return;
+    }
 
-    console.log(`MP4 Export started: ${this.exportMax} frames`);
+    console.log(`MP4 Export started: ${this.exportMax} frames (${exportW}x${exportH})`);
   }
 
   /**
@@ -97,54 +112,93 @@ class ExportModule {
   async captureFrame(canvasElement) {
     if (!this.isExporting) return;
 
+    // 現在のフレーム番号
+    const frameIndex = this.exportCount;
+    if (frameIndex >= this.exportMax) {
+      this.isExporting = false;
+      return;
+    }
+
     if (this.mode === 'MP4') {
-      let frame = new VideoFrame(canvasElement, { timestamp: this.exportCount * 1e6 / this.fps });
-      this.videoEncoder.encode(frame, { keyFrame: this.exportCount % this.fps === 0 });
+      let frame;
+      try {
+        // アルファ値を破棄してエンコード（ADDブレンド等の崩れ対策）
+        frame = new VideoFrame(canvasElement, {
+          timestamp: frameIndex * 1e6 / this.fps,
+          alpha: 'discard'
+        });
+      } catch (e) {
+        frame = new VideoFrame(canvasElement, {
+          timestamp: frameIndex * 1e6 / this.fps
+        });
+      }
+
+      this.videoEncoder.encode(frame, { keyFrame: frameIndex % (this.fps * 2) === 0 });
       frame.close();
-      
-      this._progressCheck();
+
+      this.exportCount++;
+      if (this.exportCount % this.fps === 0) {
+        console.log(`Exporting: ${this.exportCount} / ${this.exportMax} (MP4)`);
+      }
+
+      if (this.exportCount >= this.exportMax) {
+        this.isExporting = false;
+        this.finish();
+      }
 
     } else if (this.mode === 'PNG') {
-      // 非同期描画になるため、現在のカウントをローカルに保持
-      const currentCount = this.exportCount; 
-      
+      this.pendingFrames++;
+
       canvasElement.toBlob(async (blob) => {
-        if (!blob) return;
-        const filename = `${this.filenamePrefix}_${String(currentCount).padStart(4, '0')}.png`;
+        if (!blob) {
+          this.pendingFrames--;
+          return;
+        }
+        const filename = `${this.filenamePrefix}_${String(frameIndex).padStart(4, '0')}.png`;
 
         try {
           if (this.exportDirHandle) {
-             const fileHandle = await this.exportDirHandle.getFileHandle(filename, { create: true });
-             const writable = await fileHandle.createWritable();
-             await writable.write(blob);
-             await writable.close();
+            const fileHandle = await this.exportDirHandle.getFileHandle(filename, { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(blob);
+            await writable.close();
           } else {
-             const url = URL.createObjectURL(blob);
-             const a = document.createElement('a');
-             a.href = url;
-             a.download = filename;
-             a.click();
-             URL.revokeObjectURL(url);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
           }
-        } catch(e) {
-             console.error("Frame export failed", e);
+        } catch (e) {
+          console.error("Frame export failed", e);
+        } finally {
+          this.pendingFrames--;
+          this._checkIfFinished();
         }
       }, 'image/png');
-      
-      this._progressCheck();
+
+      this.exportCount++;
+      if (this.exportCount >= this.exportMax) {
+        this.isExporting = false;
+      }
+
+      if (this.exportCount % this.fps === 0) {
+        console.log(`Captured: ${this.exportCount} / ${this.exportMax} (PNG)`);
+      }
+    }
+  }
+
+  _checkIfFinished() {
+    if (!this.isExporting && this.pendingFrames === 0) {
+      if (this.exportCount >= this.exportMax) {
+        this.finish();
+      }
     }
   }
 
   _progressCheck() {
-    this.exportCount++;
-    if (this.exportCount % this.fps === 0) {
-      console.log(`Exporting: ${this.exportCount} / ${this.exportMax} (${this.mode})`);
-    }
-
-    if (this.exportCount >= this.exportMax) {
-      this.isExporting = false;
-      this.finish();
-    }
+    // 互換性のため残すが、現在は captureFrame 内で直接処理
   }
 
   /**

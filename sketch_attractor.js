@@ -45,11 +45,11 @@ function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(params.bgColor);
 
-  camera = new THREE.PerspectiveCamera(60, 1920 / 1080, 0.1, 1000);
+  camera = new THREE.PerspectiveCamera(60, 2560 / 1440, 0.1, 1000);
   camera.position.set(0, 0, 80);
 
   renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-  renderer.setSize(1920, 1080);
+  renderer.setSize(2560, 1440);
   renderer.setPixelRatio(1);
   
   renderer.domElement.style.width = '100%';
@@ -368,3 +368,5 @@ function saveFrame() {
   link.click();
   document.body.removeChild(link);
 }
+
+

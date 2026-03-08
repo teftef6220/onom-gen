@@ -27,7 +27,7 @@ let exportMax = 0;
 let exportSessionID = "";
 
 function setup() {
-  let c = createCanvas(1920, 1080);
+  let c = createCanvas(2560, 1440);
   pixelDensity(1);
   c.style('width', '100%');
   c.style('height', 'auto');
@@ -296,3 +296,5 @@ function keyPressed() {
   if (key === 's' || key === 'S') startExport();
   if (key === 'r' || key === 'R') initSimulation();
 }
+
+
