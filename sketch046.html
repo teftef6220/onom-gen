@@ -1,12 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Strange Attractors</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; }
-        canvas { display: block; }
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        canvas {
+            display: block;
+        }
     </style>
     <!-- Import Map for Three.js and dependencies -->
     <script type="importmap">
@@ -20,9 +28,13 @@
     </script>
     <!-- lil-gui UMD for gui_handler.js -->
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19.1/dist/lil-gui.umd.min.js"></script>
+    <script src="https://unpkg.com/mp4-muxer/build/mp4-muxer.js"></script> <!-- MP4 Export -->
+    <script src="mp4_exporter.js"></script> <!-- Shared Export Module -->
     <script src="gui_handler.js"></script>
 </head>
+
 <body>
     <script type="module" src="sketch046.js"></script>
 </body>
+
 </html>

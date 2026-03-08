@@ -16,7 +16,8 @@ const params = {
   scrollSpeed: 2.0,
   autoUpdate: false,
   exportFrames: 600,
-  exportStart: () => startExport(),
+  exportMP4: () => startExportMP4(),
+  exportPNG: () => startExportPNG(),
   regenerate: () => generate()
 };
 
@@ -26,9 +27,7 @@ let time = 0;
 
 // 書き出し用変数
 let isExporting = false;
-let exportCount = 0;
 let exportMax = 0;
-let exportSessionID = "";
 
 function setup() {
   let c = createCanvas(1920, 1080);
@@ -259,19 +258,33 @@ window.guiConfig = [
   ]},
   { folder: 'Export', contents: [
     { object: params, variable: 'exportFrames', min: 60, max: 1200, step: 1, name: 'Frames' },
-    { object: params, variable: 'exportStart', name: 'Start Export', type: 'function' }
+    { object: params, variable: 'exportMP4', name: 'Start MP4 Export', type: 'function' },
+    { object: params, variable: 'exportPNG', name: 'Start PNG Sequence', type: 'function' }
   ]}
 ];
 
-function startExport() {
-  if (isExporting) return;
-  isExporting = true;
-  exportCount = 0;
+async function startExportMP4() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  
   exportMax = params.exportFrames;
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  exportSessionID = "";
-  for (let i = 0; i < 4; i++) exportSessionID += chars.charAt(floor(random(chars.length)));
-  console.log(`Export started: ${exportSessionID}`);
+  let suggestedName = `sketch023_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}.mp4`;
+  await window.exporter.startMP4(width, height, 30, exportMax, suggestedName);
+  
+  isExporting = true;
+  
+  // 自動ループを停止して手動制御に切り替え
+  noLoop();
+  processExport();
+}
+
+async function startExportPNG() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  
+  exportMax = params.exportFrames;
+  let prefix = `sketch023_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}`;
+  await window.exporter.startPNG(30, exportMax, prefix);
+  
+  isExporting = true;
   
   // 自動ループを停止して手動制御に切り替え
   noLoop();
@@ -279,16 +292,16 @@ function startExport() {
 }
 
 function processExport() {
-  redraw(); // 1フレーム描画
-  saveCanvas('riso_print_' + exportSessionID + '_' + nf(exportCount + 1, 3), 'png');
+  if (!isExporting && (!window.exporter || !window.exporter.isExporting)) return;
   
-  exportCount++;
-  if (exportCount >= exportMax) {
+  redraw(); // 1フレーム描画
+  window.exporter.captureFrame(document.querySelector('canvas'));
+  
+  if (!window.exporter.isExporting) {
     isExporting = false;
-    console.log("Export finished");
     loop(); // ループ再開
   } else {
-    // ブラウザのダウンロード負荷を軽減するために少し待機
-    setTimeout(processExport, 150);
+    // 次のフレームエンコードへ
+    setTimeout(processExport, 30);
   }
 }

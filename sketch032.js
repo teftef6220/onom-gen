@@ -14,7 +14,8 @@ const params = {
   autoCamera: true,
   autoCameraInterval: 2.0,
   exportFrames: 600,
-  exportStart: function() { startExport(); }
+  exportMP4: function() { startExportMP4(); },
+  exportPNG: function() { startExportPNG(); }
 };
 
 window.guiConfig = [
@@ -38,7 +39,8 @@ window.guiConfig = [
   ]},
   { folder: 'Export', contents: [
     { object: params, variable: 'exportFrames', min: 60, max: 1200, step: 1, name: 'Frames' },
-    { object: params, variable: 'exportStart', name: 'Start Export', type: 'function' }
+    { object: params, variable: 'exportMP4', name: 'Start MP4 Export', type: 'function' },
+    { object: params, variable: 'exportPNG', name: 'Start PNG Sequence', type: 'function' }
   ]}
 ];
 
@@ -51,9 +53,7 @@ let lastCameraSwitchTime = 0;
 
 // 書き出し用変数
 let isExporting = false;
-let exportCount = 0;
 let exportMax = 0;
-let exportSessionID = "";
 
 init();
 animate();
@@ -219,7 +219,7 @@ function updateFloatingElements() {
 
 function animate() {
   // 書き出し中はブラウザの描画ループに任せず、制御下で進める
-  if (!isExporting) {
+  if (!isExporting && (!window.exporter || !window.exporter.isExporting)) {
     requestAnimationFrame(animate);
     render();
   }
@@ -283,66 +283,50 @@ function render() {
   renderer.render(scene, camera);
 
   // 書き出し処理
-  if (isExporting) {
-    saveFrame();
-    exportCount++;
-    if (exportCount >= exportMax) {
-      finishExport();
+  if (isExporting || (window.exporter && window.exporter.isExporting)) {
+    window.exporter.captureFrame(renderer.domElement);
+    if (!window.exporter.isExporting) {
+      isExporting = false;
+      animate(); // 再開
     } else {
-      // ブラウザのダウンロード制限を回避するために少し待機（150ms）
-      // これにより「複数ファイルのダウンロード」ブロックを回避しやすくなります
       setTimeout(() => {
-        requestAnimationFrame(render);
-      }, 150);
+        render(); // 手動で次フレームを進める
+      }, 30);
     }
   }
 }
 
 // --- 書き出し機能 ---
 
-function startExport() {
-  if (isExporting) return;
+async function startExportMP4() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  
+  exportMax = params.exportFrames;
+  let suggestedName = `sketch032_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}.mp4`;
+  // Three.js renderer size is 1920x1080
+  await window.exporter.startMP4(1920, 1080, 30, exportMax, suggestedName);
   
   isExporting = true;
-  exportCount = 0;
+  render(); // 初回フレームを描画
+}
+
+async function startExportPNG() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  
   exportMax = params.exportFrames;
+  let prefix = `sketch032_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}`;
+  await window.exporter.startPNG(30, exportMax, prefix);
   
-  // ランダムなセッションID生成
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  exportSessionID = "";
-  for (let i = 0; i < 4; i++) exportSessionID += chars.charAt(Math.floor(Math.random() * chars.length));
-  
-  console.log(`Export started: ${exportSessionID}, Total frames: ${exportMax}`);
-  
-  // ループを開始（animate関数内ではなく、ここで明示的にrenderを回す）
-  render();
-}
-
-function saveFrame() {
-  // dataURLを取得してダウンロードリンクを作成・クリック
-  const dataURL = renderer.domElement.toDataURL('image/png');
-  const link = document.createElement('a');
-  
-  // ファイル名: liquid_chrome_ID_001.png
-  const numStr = String(exportCount + 1).padStart(3, '0');
-  link.download = `liquid_chrome_${exportSessionID}_${numStr}.png`;
-  link.href = dataURL;
-  
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
-function finishExport() {
-  isExporting = false;
-  console.log("Export finished");
-  // 通常のアニメーションループに戻る
-  animate();
+  isExporting = true;
+  render(); // 初回フレームを描画
 }
 
 // キーボードショートカット
 window.addEventListener('keydown', (e) => {
-  if (e.key === 's' || e.key === 'S') {
-    startExport();
+  if (e.key === 'm' || e.key === 'M') {
+    startExportMP4();
+  }
+  if (e.key === 'p' || e.key === 'P') {
+    startExportPNG();
   }
 });

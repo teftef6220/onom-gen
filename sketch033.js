@@ -24,7 +24,8 @@ const params = {
   attractionRange: 100,
   boundaryMode: 'Wrap', // Wrap (ループ), Flow (流れる)
   exportFrames: 600,
-  exportStart: function() { startExport(); }
+  exportMP4: function() { startExportMP4(); },
+  exportPNG: function() { startExportPNG(); }
 };
 
 // カラーパレット定義
@@ -80,7 +81,8 @@ window.guiConfig = [
   }},
   { folder: 'Export', contents: [
     { object: params, variable: 'exportFrames', min: 60, max: 1200, step: 1, name: 'Frames' },
-    { object: params, variable: 'exportStart', name: 'Start Export', type: 'function' }
+    { object: params, variable: 'exportMP4', name: 'Start MP4 Export', type: 'function' },
+    { object: params, variable: 'exportPNG', name: 'Start PNG Sequence', type: 'function' }
   ]}
 ];
 
@@ -94,9 +96,7 @@ let pulseTimer = 0;
 
 // 書き出し用変数
 let isExporting = false;
-let exportCount = 0;
 let exportMax = 0;
-let exportSessionID = "";
 
 init();
 
@@ -144,7 +144,7 @@ function init() {
 
   // 6. アニメーションループ
   app.ticker.add((delta) => {
-    if (!isExporting) {
+    if (!isExporting && (!window.exporter || !window.exporter.isExporting)) {
       update(delta);
     }
   });
@@ -352,28 +352,32 @@ function update(delta) {
 
 // --- 書き出し機能 ---
 
-function startExport() {
-  if (isExporting) return;
+async function startExportMP4() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  
+  exportMax = params.exportFrames;
+  let suggestedName = `sketch033_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}.mp4`;
+  await window.exporter.startMP4(1920, 1080, 30, exportMax, suggestedName);
   
   isExporting = true;
-  exportCount = 0;
-  exportMax = params.exportFrames;
-  
-  // Pixiの自動更新を停止
   app.ticker.stop();
+  processExportFrame();
+}
+
+async function startExportPNG() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
   
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  exportSessionID = "";
-  for (let i = 0; i < 4; i++) exportSessionID += chars.charAt(Math.floor(Math.random() * chars.length));
+  exportMax = params.exportFrames;
+  let prefix = `sketch033_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}`;
+  await window.exporter.startPNG(30, exportMax, prefix);
   
-  console.log(`Export started: ${exportSessionID}`);
-  
-  // 手動ループ開始
+  isExporting = true;
+  app.ticker.stop();
   processExportFrame();
 }
 
 function processExportFrame() {
-  if (!isExporting) return;
+  if (!isExporting && (!window.exporter || !window.exporter.isExporting)) return;
 
   // 1フレーム進める (delta = 1.0 と仮定)
   update(1.0);
@@ -382,30 +386,13 @@ function processExportFrame() {
   app.renderer.render(app.stage);
 
   // 保存
-  saveFrame();
+  window.exporter.captureFrame(app.view);
 
-  exportCount++;
-  if (exportCount >= exportMax) {
-    finishExport();
+  if (!window.exporter.isExporting) {
+    isExporting = false;
+    app.ticker.start();
   } else {
-    // 少し待機してから次へ（ブラウザ負荷軽減）
-    setTimeout(processExportFrame, 150);
+    // 少し待機してから次へ
+    setTimeout(processExportFrame, 30);
   }
-}
-
-function saveFrame() {
-  const dataURL = app.view.toDataURL('image/png');
-  const link = document.createElement('a');
-  const numStr = String(exportCount + 1).padStart(3, '0');
-  link.download = `digital_swarm_${exportSessionID}_${numStr}.png`;
-  link.href = dataURL;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
-function finishExport() {
-  isExporting = false;
-  console.log("Export finished");
-  app.ticker.start(); // 自動更新再開
 }

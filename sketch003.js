@@ -69,24 +69,24 @@ function draw() {
   blendMode(BLEND);
   rectMode(CORNER);
   noStroke();
-  
+
   let bgCol = color(params.bgColor);
   if (params.trailStrength > 0) {
     bgCol.setAlpha(map(params.trailStrength, 0, 100, 255, 10));
   }
   fill(bgCol);
   rect(0, 0, width, height);
-  
+
   if (params.bgMode === 'Technical') {
     drawTechnicalBackground();
   }
-  
+
   if (params.autoLayout && frameCount % params.layoutInterval === 0) {
     params.cols = floor(random(1, 6));
     params.textSize = floor(random(10, 200));
     params.lineHeight = random(0.6, 2.5);
   }
-  
+
   time += params.speed * 0.02;
 
   // フォント設定
@@ -94,9 +94,9 @@ function draw() {
   if (params.style === 'BOLD') textStyle(BOLD);
   else if (params.style === 'ITALIC') textStyle(ITALIC);
   else textStyle(NORMAL);
-  
+
   textSize(params.textSize);
-  
+
   if (params.align === 'CENTER') textAlign(CENTER, CENTER);
   else if (params.align === 'LEFT') textAlign(LEFT, CENTER);
   else if (params.align === 'RIGHT') textAlign(RIGHT, CENTER);
@@ -106,10 +106,10 @@ function draw() {
   let marginY = 100;
   let drawW = width - marginX * 2;
   let drawH = height - marginY * 2;
-  
+
   let cellW = drawW / params.cols;
   let cellH = (params.textSize * params.lineHeight);
-  
+
   // 全体の高さに基づいて開始Y位置を調整（中央寄せ）
   let totalH = cellH * params.rows;
   let startY = (height - totalH) / 2 + cellH / 2;
@@ -127,16 +127,16 @@ function draw() {
       let virtualY = y + scrollOffset;
       // 正の剰余を計算してループさせる
       let loopedY = ((virtualY % params.rows) + params.rows) % params.rows;
-      
+
       let posX = startX + x * cellW;
       let posY = startY + loopedY * cellH;
-      
+
       if (params.align === 'CENTER') posX += cellW / 2;
       else if (params.align === 'RIGHT') posX += cellW;
 
       // 表示するテキスト（行数より多い場合はループ）
       let txt = lines[y % lines.length];
-      
+
       // 波の計算
       let waveInput = (y * params.frequency) + (x * params.frequency * 0.5) - (time * params.waveSpeed);
       let wave = sin(waveInput); // -1 to 1
@@ -169,22 +169,22 @@ function draw() {
         let scaleX = map(wave, -1, 1, 0.5, 1.0 + params.amplitude * 2.0);
         scaleX = max(0.1, scaleX); // 負の値防止
         scale(scaleX, 1);
-        
+
       } else if (params.mode === 'Slide') {
         // 横方向へのスライド
         let slideX = wave * params.amplitude * 200;
         translate(slideX, 0);
-        
+
       } else if (params.mode === 'Shear') {
         // 斜体（シアー）効果
         let shearVal = wave * params.amplitude * 1.0;
         shearX(shearVal);
-        
+
       } else if (params.mode === 'Wave') {
         // 縦方向の波
         let waveY = wave * params.amplitude * 50;
         translate(0, waveY);
-        
+
       } else if (params.mode === 'Opacity') {
         // 透明度変化
         let alpha = map(wave, -1, 1, 50, 255);
@@ -193,17 +193,17 @@ function draw() {
         } else {
           fill(red(params.fgColor), green(params.fgColor), blue(params.fgColor), alpha);
         }
-        
+
       } else if (params.mode === 'Chaos') {
         // カオスモード: 個別に回転・移動
         let n = noise(x * 0.8, y * 0.8, time * 0.5);
         let angle = map(n, 0, 1, -PI, PI) * params.amplitude;
         rotate(angle);
-        
+
         let driftX = (noise(x + time, y) - 0.5) * params.amplitude * 100;
         let driftY = (noise(x, y + time) - 0.5) * params.amplitude * 100;
         translate(driftX, driftY);
-        
+
       } else if (params.mode === 'Decoding') {
         // デコーディング効果: ランダムな文字に置換
         let decoded = "";
@@ -258,50 +258,72 @@ function drawTechnicalBackground() {
 // --- UI & Export Logic ---
 
 window.guiConfig = [
-  { folder: 'Content', contents: [
-    { object: params, variable: 'textString', name: 'Text' },
-    { object: params, variable: 'rows', min: 1, max: 50, step: 1, name: 'Rows' },
-    { object: params, variable: 'cols', min: 1, max: 10, step: 1, name: 'Cols', listen: true },
-    { object: params, variable: 'textSize', min: 10, max: 300, name: 'Size', listen: true },
-    { object: params, variable: 'lineHeight', min: 0.5, max: 3.0, name: 'Line Height', listen: true },
-    { object: params, variable: 'align', options: ['CENTER', 'LEFT', 'RIGHT'], name: 'Align' },
-    { object: params, variable: 'font', options: ['Arial', 'Helvetica', 'Verdana', 'Courier New', 'Times New Roman'], name: 'Font' },
-    { object: params, variable: 'style', options: ['NORMAL', 'BOLD', 'ITALIC'], name: 'Style' },
-    { object: params, variable: 'autoLayout', name: 'Auto Layout' },
-    { object: params, variable: 'layoutInterval', min: 10, max: 600, step: 10, name: 'Layout Interval' }
-  ]},
-  { folder: 'Animation', contents: [
-    { object: params, variable: 'mode', options: ['Stretch', 'Slide', 'Shear', 'Wave', 'Opacity', 'Chaos', 'Decoding'], name: 'Mode' },
-    { object: params, variable: 'speed', min: 0, max: 5.0, name: 'Time Speed' },
-    { object: params, variable: 'waveSpeed', min: -5.0, max: 5.0, name: 'Wave Speed' },
-    { object: params, variable: 'frequency', min: 0.01, max: 2.0, name: 'Frequency' },
-    { object: params, variable: 'amplitude', min: 0, max: 5.0, name: 'Amplitude' },
-    { object: params, variable: 'scrollSpeed', min: -5.0, max: 5.0, name: 'Scroll' }
-  ]},
-  { folder: 'Color', contents: [
-    { object: params, variable: 'colorMode', options: Object.keys(PALETTES), name: 'Palette' },
-    { object: params, variable: 'bgMode', options: ['Solid', 'Technical'], name: 'Background' },
-    { object: params, variable: 'trailStrength', min: 0, max: 100, name: 'Trail' },
-    { object: params, variable: 'renderMode', options: ['FILL', 'OUTLINE', 'MIXED'], name: 'Render Mode' },
-    { object: params, variable: 'strokeWidth', min: 0.5, max: 10.0, name: 'Outline Width' }
-  ]},
-  { folder: 'Export', contents: [
-    { object: params, variable: 'exportFrames', min: 60, max: 1200, step: 1, name: 'Frames' },
-    { object: params, variable: 'exportStart', name: 'Start Export', type: 'function' }
-  ]}
+  {
+    folder: 'Content', contents: [
+      { object: params, variable: 'textString', name: 'Text' },
+      { object: params, variable: 'rows', min: 1, max: 50, step: 1, name: 'Rows' },
+      { object: params, variable: 'cols', min: 1, max: 10, step: 1, name: 'Cols', listen: true },
+      { object: params, variable: 'textSize', min: 10, max: 300, name: 'Size', listen: true },
+      { object: params, variable: 'lineHeight', min: 0.5, max: 3.0, name: 'Line Height', listen: true },
+      { object: params, variable: 'align', options: ['CENTER', 'LEFT', 'RIGHT'], name: 'Align' },
+      { object: params, variable: 'font', options: ['Arial', 'Helvetica', 'Verdana', 'Courier New', 'Times New Roman'], name: 'Font' },
+      { object: params, variable: 'style', options: ['NORMAL', 'BOLD', 'ITALIC'], name: 'Style' },
+      { object: params, variable: 'autoLayout', name: 'Auto Layout' },
+      { object: params, variable: 'layoutInterval', min: 10, max: 600, step: 10, name: 'Layout Interval' }
+    ]
+  },
+  {
+    folder: 'Animation', contents: [
+      { object: params, variable: 'mode', options: ['Stretch', 'Slide', 'Shear', 'Wave', 'Opacity', 'Chaos', 'Decoding'], name: 'Mode' },
+      { object: params, variable: 'speed', min: 0, max: 5.0, name: 'Time Speed' },
+      { object: params, variable: 'waveSpeed', min: -5.0, max: 5.0, name: 'Wave Speed' },
+      { object: params, variable: 'frequency', min: 0.01, max: 2.0, name: 'Frequency' },
+      { object: params, variable: 'amplitude', min: 0, max: 5.0, name: 'Amplitude' },
+      { object: params, variable: 'scrollSpeed', min: -5.0, max: 5.0, name: 'Scroll' }
+    ]
+  },
+  {
+    folder: 'Color', contents: [
+      { object: params, variable: 'colorMode', options: Object.keys(PALETTES), name: 'Palette' },
+      { object: params, variable: 'bgMode', options: ['Solid', 'Technical'], name: 'Background' },
+      { object: params, variable: 'trailStrength', min: 0, max: 100, name: 'Trail' },
+      { object: params, variable: 'renderMode', options: ['FILL', 'OUTLINE', 'MIXED'], name: 'Render Mode' },
+      { object: params, variable: 'strokeWidth', min: 0.5, max: 10.0, name: 'Outline Width' }
+    ]
+  },
+  {
+    folder: 'Export', contents: [
+      { object: params, variable: 'exportFrames', min: 60, max: 1200, step: 1, name: 'Frames' },
+      { object: params, variable: 'exportMP4', name: 'Start MP4 Export', type: 'function' },
+      { object: params, variable: 'exportPNG', name: 'Start PNG Sequence', type: 'function' }
+    ]
+  }
 ];
 
-function startExport() {
-  if (isExporting) return;
-  isExporting = true;
-  exportCount = 0;
+async function startExportMP4() {
+  if (isExporting || window.exporter.isExporting) return;
+
   exportMax = params.exportFrames;
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  exportSessionID = "";
-  for (let i = 0; i < 4; i++) exportSessionID += chars.charAt(floor(random(chars.length)));
-  console.log(`Export started: ${exportSessionID}`);
+  let suggestedName = `Sketch_003_${year()}${nf(month(), 2)}${nf(day(), 2)}_${nf(hour(), 2)}${nf(minute(), 2)}.mp4`;
+  // startMP4(width, height, fps, totalFrames, suggestedName)
+  await window.exporter.startMP4(width, height, 30, exportMax, suggestedName);
+
+  isExporting = true;
+}
+
+async function startExportPNG() {
+  if (isExporting || window.exporter.isExporting) return;
+
+  exportMax = params.exportFrames;
+  let prefix = `Sketch_003_${year()}${nf(month(), 2)}${nf(day(), 2)}_${nf(hour(), 2)}${nf(minute(), 2)}`;
+  // startPNG(fps, totalFrames, prefix)
+  await window.exporter.startPNG(30, exportMax, prefix);
+
+  isExporting = true;
 }
 
 function keyPressed() {
-  if (key === 's' || key === 'S') startExport();
+  if (key === 'm' || key === 'M') startExportMP4();
+  if (key === 'p' || key === 'P') startExportPNG();
+  if (key === 'r' || key === 'R') initGrid();
 }

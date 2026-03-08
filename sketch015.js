@@ -14,7 +14,8 @@ const params = {
   bgColor: '#111111',
   blendMode: 'normal', // normal, multiply, screen, overlay
   exportFrames: 600,
-  exportStart: function() { startExport(); }
+  exportMP4: function() { startExportMP4(); },
+  exportPNG: function() { startExportPNG(); }
 };
 
 // カラーパレット
@@ -46,7 +47,8 @@ window.guiConfig = [
   ]},
   { folder: 'Export', contents: [
     { object: params, variable: 'exportFrames', min: 60, max: 1200, step: 1, name: 'Frames' },
-    { object: params, variable: 'exportStart', name: 'Start Export', type: 'function' }
+    { object: params, variable: 'exportMP4', name: 'Start MP4 Export', type: 'function' },
+    { object: params, variable: 'exportPNG', name: 'Start PNG Sequence', type: 'function' }
   ]}
 ];
 
@@ -56,9 +58,7 @@ let time = 0;
 
 // 書き出し用変数
 let isExporting = false;
-let exportCount = 0;
 let exportMax = 0;
-let exportSessionID = "";
 
 window.onload = function() {
   // Canvas設定
@@ -81,7 +81,7 @@ window.onload = function() {
 
   // アニメーションループ
   paper.view.onFrame = function(event) {
-    if (!isExporting) {
+    if (!isExporting && (!window.exporter || !window.exporter.isExporting)) {
       update(event.delta);
     }
   };
@@ -203,57 +203,40 @@ function update(delta) {
   });
 
   // 書き出し処理
-  if (isExporting) {
-    // Paper.jsは同期的に描画されるので、ここで描画完了している
-    saveFrame();
-    exportCount++;
-    if (exportCount >= exportMax) {
-      finishExport();
+  if (isExporting || (window.exporter && window.exporter.isExporting)) {
+    window.exporter.captureFrame(document.getElementById('myCanvas'));
+    
+    if (!window.exporter.isExporting) {
+      isExporting = false;
     } else {
-      // 次のフレームへ（少し待機してブラウザを固まらせない）
       setTimeout(() => {
-        // Paper.jsのonFrameは自動で回るが、書き出し中は手動制御したい場合は
-        // ここで update を呼ぶか、フラグ管理する。
-        // 今回はonFrame内で !isExporting チェックをしているので、
-        // 書き出しループはここから再帰的に update を呼ぶ形にする。
-        update(1.0 / 60.0); // 60fps想定の固定デルタ
-      }, 50);
+        update(1.0 / 30.0); // 30fps想定の固定デルタで次フレームを進める
+      }, 30); // export_module側のエンコード処理を待つための余白
     }
   }
 }
 
 // --- 書き出し機能 ---
 
-function startExport() {
-  if (isExporting) return;
+async function startExportMP4() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  
+  exportMax = params.exportFrames;
+  let suggestedName = `sketch015_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}.mp4`;
+  // Paper.js canvas size is 1920x1080
+  await window.exporter.startMP4(1920, 1080, 30, exportMax, suggestedName);
   
   isExporting = true;
-  exportCount = 0;
+  update(1.0/30.0); // start the first frame
+}
+
+async function startExportPNG() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  
   exportMax = params.exportFrames;
+  let prefix = `sketch015_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}`;
+  await window.exporter.startPNG(30, exportMax, prefix);
   
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  exportSessionID = "";
-  for (let i = 0; i < 4; i++) exportSessionID += chars.charAt(Math.floor(Math.random() * chars.length));
-  
-  console.log(`Export started: ${exportSessionID}`);
-  
-  // 書き出しループ開始
-  update(1.0/60.0);
-}
-
-function saveFrame() {
-  const canvas = document.getElementById('myCanvas');
-  const dataURL = canvas.toDataURL('image/png');
-  const link = document.createElement('a');
-  const numStr = String(exportCount + 1).padStart(3, '0');
-  link.download = `organic_strata_${exportSessionID}_${numStr}.png`;
-  link.href = dataURL;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
-function finishExport() {
-  isExporting = false;
-  console.log("Export finished");
+  isExporting = true;
+  update(1.0/30.0); // start the first frame
 }

@@ -24,7 +24,8 @@ let exportSessionID = "";
 const config = {
   isColorful: true,
   exportMax: 600,
-  export: startExportSequence
+  exportMP4: async () => await startExportMP4(),
+  exportPNG: async () => await startExportPNG()
 };
 
 function setup() {
@@ -73,11 +74,11 @@ function draw() {
   applyGrain();
 
   // 連続書き出し処理
-  if (isExporting) {
-    saveCanvas('brutalist_design_' + exportSessionID + '_' + nf(saveCount, 3), 'png');
-    saveCount++;
+  if (isExporting || (window.exporter && window.exporter.isExporting)) {
+    window.exporter.captureFrame(document.querySelector('canvas'));
     exportCurrent++;
-    if (exportCurrent >= config.exportMax) {
+    
+    if (!window.exporter.isExporting) {
       isExporting = false;
       noLoop();
     }
@@ -100,10 +101,13 @@ function mouseMoved() {
   redraw();
 }
 
-// 's'キーで画像を保存
+// 's'キー等での操作
 function keyPressed() {
-  if (key === 's' || key === 'S') {
-    startExportSequence();
+  if (key === 'm' || key === 'M') {
+    startExportMP4();
+  }
+  if (key === 'p' || key === 'P') {
+    startExportPNG();
   }
   if (key === 'c' || key === 'C') {
     config.isColorful = !config.isColorful;
@@ -114,24 +118,32 @@ function keyPressed() {
 // --- UI & Export Logic ---
 
 var guiConfig = [
-  { object: config, variable: 'exportMax', min: 10, max: 1000, step: 10, name: '書き出し枚数' },
-  { object: config, variable: 'isColorful', name: 'カラーモード', listen: true, onChange: () => redraw() },
-  { object: config, variable: 'export', name: '書き出し開始', type: 'function' }
+  { object: config, variable: 'exportMax', min: 10, max: 1000, step: 10, name: 'Frames' },
+  { object: config, variable: 'isColorful', name: 'Color Mode', listen: true, onChange: () => redraw() },
+  { object: config, variable: 'exportMP4', name: 'Start MP4 Export', type: 'function' },
+  { object: config, variable: 'exportPNG', name: 'Start PNG Sequence', type: 'function' }
 ];
 
-function startExportSequence() {
-  if (!isExporting) {
-    isExporting = true;
-    exportCurrent = 0;
-    saveCount = 1; // 001から開始
-    // 4桁のランダム英数字を生成してファイル名に付与（重複防止）
-    exportSessionID = "";
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    for (let i = 0; i < 4; i++) {
-      exportSessionID += chars.charAt(floor(random(chars.length)));
-    }
-    loop(); // ループを開始して連続保存
-  }
+async function startExportMP4() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  
+  let suggestedName = `sketch026_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}.mp4`;
+  await window.exporter.startMP4(width, height, 30, config.exportMax, suggestedName);
+  
+  isExporting = true;
+  exportCurrent = 0;
+  loop(); // ループを開始して連続保存
+}
+
+async function startExportPNG() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  
+  let prefix = `sketch026_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}`;
+  await window.exporter.startPNG(30, config.exportMax, prefix);
+  
+  isExporting = true;
+  exportCurrent = 0;
+  loop(); // ループを開始して連続保存
 }
 
 // --- 描画用ヘルパー関数 ---

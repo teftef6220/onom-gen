@@ -20,7 +20,8 @@ const params = {
   autoMorph: false,
   morphSpeed: 0.5,
   exportFrames: 600,
-  exportStart: () => startExport(),
+  exportMP4: () => startExportMP4(),
+  exportPNG: () => startExportPNG(),
   reset: () => initSystem()
 };
 
@@ -34,9 +35,7 @@ let currentAttractor = null;
 
 // 書き出し用変数
 let isExporting = false;
-let exportCount = 0;
 let exportMax = 0;
-let exportSessionID = "";
 
 init();
 animate();
@@ -307,10 +306,9 @@ function animate() {
   controls.update();
   renderer.render(scene, camera);
 
-  if (isExporting) {
-    saveFrame();
-    exportCount++;
-    if (exportCount >= exportMax) {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) {
+    window.exporter.captureFrame(renderer.domElement);
+    if (!window.exporter.isExporting) {
       isExporting = false;
       console.log("Export finished");
       animate();
@@ -344,27 +342,41 @@ window.guiConfig = [
   ]},
   { folder: 'Export', contents: [
     { object: params, variable: 'exportFrames', min: 60, max: 1200, step: 1, name: 'Frames' },
-    { object: params, variable: 'exportStart', name: 'Start Export', type: 'function' }
+    { object: params, variable: 'exportMP4', name: 'Start MP4 Export', type: 'function' },
+    { object: params, variable: 'exportPNG', name: 'Start PNG Sequence', type: 'function' }
   ]}
 ];
 
-function startExport() {
-  if (isExporting) return;
-  isExporting = true;
-  exportCount = 0;
+async function startExportMP4() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
   exportMax = params.exportFrames;
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  exportSessionID = "";
-  for (let i = 0; i < 4; i++) exportSessionID += chars.charAt(Math.floor(Math.random() * chars.length));
-  console.log(`Export started: ${exportSessionID}`);
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  const h = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  let suggestedName = `sketch046_${y}${m}${d}_${h}${min}.mp4`;
+  await window.exporter.startMP4(1920, 1080, 30, exportMax, suggestedName);
+  isExporting = true;
 }
 
-function saveFrame() {
-  const dataURL = renderer.domElement.toDataURL('image/png');
-  const link = document.createElement('a');
-  link.download = `attractor_${exportSessionID}_${String(exportCount + 1).padStart(3, '0')}.png`;
-  link.href = dataURL;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+async function startExportPNG() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  exportMax = params.exportFrames;
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  const h = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  let prefix = `sketch046_${y}${m}${d}_${h}${min}`;
+  await window.exporter.startPNG(30, exportMax, prefix);
+  isExporting = true;
 }
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'm' || e.key === 'M') startExportMP4();
+  if (e.key === 'p' || e.key === 'P') startExportPNG();
+  if (e.key === 'r' || e.key === 'R') initSystem();
+});

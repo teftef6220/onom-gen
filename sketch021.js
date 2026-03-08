@@ -25,7 +25,8 @@ const params = {
   connectionOpacity: 0.3,
   connectionWidth: 1.0,
   exportFrames: 600,
-  exportStart: () => startExport(),
+  exportMP4: () => startExportMP4(),
+  exportPNG: () => startExportPNG(),
 };
 
 let scene, camera, renderer, controls;
@@ -38,9 +39,7 @@ let time = 0;
 
 // 書き出し用変数
 let isExporting = false;
-let exportCount = 0;
 let exportMax = 0;
-let exportSessionID = "";
 
 window.guiConfig = [
   { folder: 'Generator', contents: [
@@ -72,7 +71,8 @@ window.guiConfig = [
   ]},
   { folder: 'Export', contents: [
     { object: params, variable: 'exportFrames', min: 60, max: 1200, step: 1, name: 'Frames' },
-    { object: params, variable: 'exportStart', name: 'Start Export', type: 'function' }
+    { object: params, variable: 'exportMP4', name: 'Start MP4 Export', type: 'function' },
+    { object: params, variable: 'exportPNG', name: 'Start PNG Sequence', type: 'function' }
   ]}
 ];
 
@@ -315,7 +315,7 @@ function updateLines() {
 }
 
 function animate() {
-  if (!isExporting) {
+  if (!isExporting && (!window.exporter || !window.exporter.isExporting)) {
     requestAnimationFrame(animate);
   }
 
@@ -340,40 +340,38 @@ function animate() {
   controls.update();
   renderer.render(scene, camera);
 
-  if (isExporting) {
-    saveFrame();
-    exportCount++;
-    if (exportCount >= exportMax) {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) {
+    window.exporter.captureFrame(renderer.domElement);
+    if (!window.exporter.isExporting) {
       isExporting = false;
-      console.log("Export finished");
-      animate();
+      animate(); // 再開
     } else {
       setTimeout(() => {
-        requestAnimationFrame(animate);
-      }, 150);
+        animate(); // 手動で次フレームを進める
+      }, 30);
     }
   }
 }
 
-function startExport() {
-  if (isExporting) return;
-  isExporting = true;
-  exportCount = 0;
+async function startExportMP4() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  
   exportMax = params.exportFrames;
+  let suggestedName = `sketch021_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}.mp4`;
+  // Three.js renderer size is 1920x1080
+  await window.exporter.startMP4(1920, 1080, 30, exportMax, suggestedName);
   
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  exportSessionID = "";
-  for (let i = 0; i < 4; i++) exportSessionID += chars.charAt(Math.floor(Math.random() * chars.length));
-  
-  console.log(`Export started: ${exportSessionID}`);
+  isExporting = true;
+  animate(); // 初回フレームを描画
 }
 
-function saveFrame() {
-  const dataURL = renderer.domElement.toDataURL('image/png');
-  const link = document.createElement('a');
-  link.download = `particles3d_${exportSessionID}_${String(exportCount + 1).padStart(3, '0')}.png`;
-  link.href = dataURL;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+async function startExportPNG() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  
+  exportMax = params.exportFrames;
+  let prefix = `sketch021_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}`;
+  await window.exporter.startPNG(30, exportMax, prefix);
+  
+  isExporting = true;
+  animate(); // 初回フレームを描画
 }

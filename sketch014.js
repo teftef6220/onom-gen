@@ -5,9 +5,7 @@ var dB = 0.5;
 var feed = 0.055;
 var k = 0.062;
 var isExporting = false;
-var exportCount = 0;
 var exportMax = 600;
-var exportSessionID = "";
 
 var guiConfig = [
   { variable: 'dA', min: 0.1, max: 1.2, step: 0.01 },
@@ -15,7 +13,8 @@ var guiConfig = [
   { variable: 'feed', min: 0.01, max: 0.1, step: 0.001 },
   { variable: 'k', min: 0.01, max: 0.1, step: 0.001 },
   { variable: 'exportMax', min: 60, max: 1200, step: 1, name: 'Export Frames' },
-  { variable: 'startExport', name: 'Start Export', type: 'function' }
+  { variable: 'exportMP4', name: 'Start MP4 Export', type: 'function' },
+  { variable: 'exportPNG', name: 'Start PNG Sequence', type: 'function' }
 ];
 
 function setup() {
@@ -80,11 +79,9 @@ function draw() {
 
   // 書き出し処理
   if (isExporting) {
-    saveCanvas('reaction_diffusion_' + exportSessionID + '_' + nf(exportCount + 1, 3), 'png');
-    exportCount++;
-    if (exportCount >= exportMax) {
-      isExporting = false;
-      console.log("Export finished");
+    window.exporter.captureFrame(document.querySelector('canvas'));
+    if (!window.exporter.isExporting) {
+       isExporting = false;
     }
   }
 }
@@ -115,14 +112,28 @@ function laplaceB(x, y) {
     return grid[x][y].b * -1 + grid[x-1][y].b * 0.2 + grid[x+1][y].b * 0.2 + grid[x][y-1].b * 0.2 + grid[x][y+1].b * 0.2 + grid[x-1][y-1].b * 0.05 + grid[x+1][y-1].b * 0.05 + grid[x-1][y+1].b * 0.05 + grid[x+1][y+1].b * 0.05;
 }
 
-function startExport() {
-  if (isExporting) return;
+async function startExportMP4() {
+  if (isExporting || window.exporter.isExporting) return;
+  
+  let suggestedName = `sketch014_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}.mp4`;
+  await window.exporter.startMP4(width, height, 30, exportMax, suggestedName);
+  
   isExporting = true;
-  exportCount = 0;
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  exportSessionID = "";
-  for (let i = 0; i < 4; i++) exportSessionID += chars.charAt(floor(random(chars.length)));
-  console.log(`Export started: ${exportSessionID}`);
 }
 
-window.startExport = startExport;
+async function startExportPNG() {
+  if (isExporting || window.exporter.isExporting) return;
+  
+  let prefix = `sketch014_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}`;
+  await window.exporter.startPNG(30, exportMax, prefix);
+  
+  isExporting = true;
+}
+
+function keyPressed() {
+  if (key === 'm' || key === 'M') startExportMP4();
+  if (key === 'p' || key === 'P') startExportPNG();
+}
+
+window.exportMP4 = startExportMP4;
+window.exportPNG = startExportPNG;

@@ -30,7 +30,8 @@ const params = {
   agentHitColor: '#FF0000',
   obstacleAvoidForce: 3.0,
   exportFrames: 600,
-  exportStart: () => startExport(),
+  exportMP4: () => startExportMP4(),
+  exportPNG: () => startExportPNG(),
   reset: () => initSimulation()
 };
 
@@ -48,9 +49,7 @@ let scrollY = 0;
 
 // 書き出し用変数
 let isExporting = false;
-let exportCount = 0;
 let exportMax = 0;
-let exportSessionID = "";
 
 function setup() {
   let c = createCanvas(1920, 1080);
@@ -352,10 +351,9 @@ function draw() {
   }
   
   // 書き出し処理
-  if (isExporting) {
-    saveCanvas('slime_mold_' + exportSessionID + '_' + nf(exportCount + 1, 3), 'png');
-    exportCount++;
-    if (exportCount >= exportMax) {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) {
+    window.exporter.captureFrame(document.querySelector('canvas'));
+    if (!window.exporter.isExporting) {
       isExporting = false;
       console.log("Export finished");
     }
@@ -418,22 +416,29 @@ window.guiConfig = [
   ]},
   { folder: 'Export', contents: [
     { object: params, variable: 'exportFrames', min: 60, max: 1200, step: 1, name: 'Frames' },
-    { object: params, variable: 'exportStart', name: 'Start Export', type: 'function' }
+    { object: params, variable: 'exportMP4', name: 'Start MP4 Export', type: 'function' },
+    { object: params, variable: 'exportPNG', name: 'Start PNG Sequence', type: 'function' }
   ]}
 ];
 
-function startExport() {
-  if (isExporting) return;
-  isExporting = true;
-  exportCount = 0;
+async function startExportMP4() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
   exportMax = params.exportFrames;
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  exportSessionID = "";
-  for (let i = 0; i < 4; i++) exportSessionID += chars.charAt(floor(random(chars.length)));
-  console.log(`Export started: ${exportSessionID}`);
+  let suggestedName = `sketch043_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}.mp4`;
+  await window.exporter.startMP4(width, height, 30, exportMax, suggestedName);
+  isExporting = true;
+}
+
+async function startExportPNG() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  exportMax = params.exportFrames;
+  let prefix = `sketch043_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}`;
+  await window.exporter.startPNG(30, exportMax, prefix);
+  isExporting = true;
 }
 
 function keyPressed() {
-  if (key === 's' || key === 'S') startExport();
+  if (key === 'm' || key === 'M') startExportMP4();
+  if (key === 'p' || key === 'P') startExportPNG();
   if (key === 'r' || key === 'R') initSimulation();
 }

@@ -17,10 +17,6 @@ const PALETTE_PASTEL = [
 
 var isExporting = false;
 var exportMax = 600;
-var exportCurrent = 0;
-var saveCount = 1;
-var exportSessionID = "";
-var exportInput;
 
 // アニメーション用変数
 let time = 0;
@@ -123,14 +119,11 @@ function draw() {
   pop();
 
   // --- 書き出し処理 ---
-  if (isExporting) {
-    saveCanvas('isometric_pop_' + exportSessionID + '_' + nf(saveCount, 3), 'png');
-    saveCount++;
-    exportCurrent++;
-    if (exportCurrent >= exportMax) {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) {
+    window.exporter.captureFrame(document.querySelector('canvas'));
+    if (!window.exporter.isExporting) {
       isExporting = false;
       noLoop();
-      console.log("Export Complete");
     }
   }
 }
@@ -203,21 +196,31 @@ var guiConfig = [
   { variable: 'isPopColor', name: 'POPカラー' },
   { variable: 'outline', name: 'アウトライン' },
   { variable: 'outlineWeight', min: 0.5, max: 10, step: 0.5, name: '線の太さ' },
-  { variable: 'startExportSequence', name: '書き出し開始', type: 'function' }
+  { variable: 'exportMP4', name: 'Start MP4 Export', type: 'function' },
+  { variable: 'exportPNG', name: 'Start PNG Sequence', type: 'function' }
 ];
 
-function startExportSequence() {
-  if (!isExporting) {
-    isExporting = true;
-    exportCurrent = 0;
-    saveCount = 1;
-    exportSessionID = "";
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    for (let i = 0; i < 4; i++) exportSessionID += chars.charAt(floor(random(chars.length)));
-    loop();
-  }
+async function startExportMP4() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  
+  let suggestedName = `sketch030_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}.mp4`;
+  await window.exporter.startMP4(width, height, 30, exportMax, suggestedName);
+  
+  isExporting = true;
+  loop();
+}
+
+async function startExportPNG() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  
+  let prefix = `sketch030_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}`;
+  await window.exporter.startPNG(30, exportMax, prefix);
+  
+  isExporting = true;
+  loop();
 }
 
 function keyPressed() {
-  if (key === 's' || key === 'S') startExportSequence();
+  if (key === 'm' || key === 'M') startExportMP4();
+  if (key === 'p' || key === 'P') startExportPNG();
 }

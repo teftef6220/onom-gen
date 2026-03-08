@@ -15,12 +15,8 @@ const PALETTE_MONO = [
 ];
 
 var isColorful = true;
-var saveCount = 1;
 var isExporting = false;
 var exportMax = 600;
-var exportCurrent = 0;
-var exportSessionID = "";
-var exportInput;
 let time = 0; // アニメーションの進行度
 let seed = 0; // 乱数シード（パターン固定用）
 let noiseSeedVal = 0; // ノイズシード（形状用）
@@ -78,15 +74,11 @@ function draw() {
   drawNeonWaves(currentPalette);
 
   // --- 書き出し処理 ---
-  if (isExporting) {
-    // ブレンドモードの影響を受けないよう通常モードで保存処理（内部的にはcanvasの状態を保存）
-    saveCanvas('neon_flow_' + exportSessionID + '_' + nf(saveCount, 3), 'png');
-    saveCount++;
-    exportCurrent++;
-    if (exportCurrent >= exportMax) {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) {
+    window.exporter.captureFrame(document.querySelector('canvas'));
+    if (!window.exporter.isExporting) {
       isExporting = false;
       noLoop();
-      console.log("Export Complete");
     }
   }
 
@@ -171,26 +163,35 @@ var guiConfig = [
   { variable: 'noiseScale', min: 0.001, max: 0.05, step: 0.001, name: '横ノイズ' },
   { variable: 'jump', name: 'ジャンプ' },
   { variable: 'particle', name: 'パーティクル' },
-  { variable: 'startExportSequence', name: '書き出し開始', type: 'function' }
+  { variable: 'exportMP4', name: 'Start MP4 Export', type: 'function' },
+  { variable: 'exportPNG', name: 'Start PNG Sequence', type: 'function' }
 ];
 
-function startExportSequence() {
-  if (!isExporting) {
-    isExporting = true;
-    exportCurrent = 0;
-    currentFrame = 0; // 書き出し開始時にフレームカウントをリセットしてジャンプタイミングを合わせる
-    saveCount = 1;
-    exportSessionID = "";
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    for (let i = 0; i < 4; i++) {
-      exportSessionID += chars.charAt(floor(random(chars.length)));
-    }
-    loop();
-  }
+async function startExportMP4() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  
+  let suggestedName = `sketch027_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}.mp4`;
+  await window.exporter.startMP4(width, height, 30, exportMax, suggestedName);
+  
+  isExporting = true;
+  currentFrame = 0; // 書き出し開始時にフレームカウントをリセットしてジャンプタイミングを合わせる
+  loop();
+}
+
+async function startExportPNG() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  
+  let prefix = `sketch027_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}`;
+  await window.exporter.startPNG(30, exportMax, prefix);
+  
+  isExporting = true;
+  currentFrame = 0; // 書き出し開始時にフレームカウントをリセットしてジャンプタイミングを合わせる
+  loop();
 }
 
 function keyPressed() {
-  if (key === 's' || key === 'S') startExportSequence();
+  if (key === 'm' || key === 'M') startExportMP4();
+  if (key === 'p' || key === 'P') startExportPNG();
   if (key === 'c' || key === 'C') { isColorful = !isColorful; }
 }
 

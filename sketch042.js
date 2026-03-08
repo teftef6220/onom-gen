@@ -34,14 +34,14 @@ const params = {
   
   // 書き出し設定
   exportMax: 300,
-  startExport: () => startExportSequence(),
+  exportMP4: () => startExportMP4(),
+  exportPNG: () => startExportPNG(),
   regenerate: () => generateGrid()
 };
 
 let saveCount = 0;
 let isExporting = false;
-let exportCurrent = 0;
-let exportSessionID = "";
+let exportMaxVal = 0;
 let cellAgents = []; // セルエージェントの配列
 let switchTimer = 0;
 let scrollOffset = 0;
@@ -203,7 +203,8 @@ window.guiConfig = [
   ]},
   { folder: 'Export', contents: [
     { object: params, variable: 'exportMax', min: 10, max: 600, step: 10, name: 'Max Frames' },
-    { object: params, variable: 'startExport', name: 'Start Export', type: 'function' }
+    { object: params, variable: 'exportMP4', name: 'Start MP4 Export', type: 'function' },
+    { object: params, variable: 'exportPNG', name: 'Start PNG Sequence', type: 'function' }
   ]}
 ];
 
@@ -340,22 +341,37 @@ function windowResized() {
   // 固定サイズのためリサイズ処理は不要
 }
 
-function startExportSequence() {
-  if (!isExporting) {
-    isExporting = true;
-    exportCurrent = 0;
-    saveCount = 1;
-    exportSessionID = nf(int(random(10000)), 4);
-  }
+async function startExportMP4() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  
+  exportMaxVal = params.exportMax;
+  let suggestedName = `sketch042_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}.mp4`;
+  await window.exporter.startMP4(width, height, 30, exportMaxVal, suggestedName);
+  
+  isExporting = true;
+}
+
+async function startExportPNG() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  
+  exportMaxVal = params.exportMax;
+  let prefix = `sketch042_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}`;
+  await window.exporter.startPNG(30, exportMaxVal, prefix);
+  
+  isExporting = true;
 }
 
 function handleExport() {
-  if (isExporting) {
-    saveCanvas('grid_3d_' + exportSessionID + '_' + nf(saveCount, 3), 'png');
-    saveCount++;
-    exportCurrent++;
-    if (exportCurrent >= params.exportMax) {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) {
+    window.exporter.captureFrame(document.querySelector('canvas'));
+    if (!window.exporter.isExporting) {
       isExporting = false;
+      console.log("Export finished");
     }
   }
+}
+
+function keyPressed() {
+  if (key === 'm' || key === 'M') startExportMP4();
+  if (key === 'p' || key === 'P') startExportPNG();
 }

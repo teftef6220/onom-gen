@@ -26,7 +26,8 @@ const params = {
   colorMode: 'Mono', // Original, Heat, Cool, Mono
   bgColor: '#000000',
   exportFrames: 600,
-  exportStart: () => startExport(),
+  exportMP4: () => startExportMP4(),
+  exportPNG: () => startExportPNG(),
   regenerate: () => createTarget()
 };
 
@@ -46,9 +47,7 @@ const targetTypes = ['Text', 'Circle', 'Grid'];
 
 // 書き出し用変数
 let isExporting = false;
-let exportCount = 0;
 let exportMax = 0;
-let exportSessionID = "";
 
 function init() {
   app = new PIXI.Application({
@@ -111,7 +110,7 @@ function init() {
   initParticles();
 
   app.ticker.add((delta) => {
-    if (!isExporting) {
+    if (!isExporting && (!window.exporter || !window.exporter.isExporting)) {
       update(delta);
     }
   });
@@ -399,50 +398,48 @@ window.guiConfig = [
   ]},
   { folder: 'Export', contents: [
     { object: params, variable: 'exportFrames', min: 60, max: 1200, step: 1, name: 'Frames' },
-    { object: params, variable: 'exportStart', name: 'Start Export', type: 'function' }
+    { object: params, variable: 'exportMP4', name: 'Start MP4 Export', type: 'function' },
+    { object: params, variable: 'exportPNG', name: 'Start PNG Sequence', type: 'function' }
   ]}
 ];
 
-function startExport() {
-  if (isExporting) return;
-  isExporting = true;
-  exportCount = 0;
+async function startExportMP4() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
+  
   exportMax = params.exportFrames;
+  let suggestedName = `sketch022_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}.mp4`;
+  // PixiJS canvas size is 1920x1080
+  await window.exporter.startMP4(1920, 1080, 30, exportMax, suggestedName);
   
+  isExporting = true;
   app.ticker.stop(); // 自動更新停止
+  processExportFrame();
+}
+
+async function startExportPNG() {
+  if (isExporting || (window.exporter && window.exporter.isExporting)) return;
   
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  exportSessionID = "";
-  for (let i = 0; i < 4; i++) exportSessionID += chars.charAt(Math.floor(Math.random() * chars.length));
+  exportMax = params.exportFrames;
+  let prefix = `sketch022_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}`;
+  await window.exporter.startPNG(30, exportMax, prefix);
   
-  console.log(`Export started: ${exportSessionID}`);
+  isExporting = true;
+  app.ticker.stop(); // 自動更新停止
   processExportFrame();
 }
 
 function processExportFrame() {
-  if (!isExporting) return;
+  if (!isExporting && (!window.exporter || !window.exporter.isExporting)) return;
   update(1.0);
   app.renderer.render(app.stage);
-  saveFrame();
+  window.exporter.captureFrame(app.view);
   
-  exportCount++;
-  if (exportCount >= exportMax) {
+  if (!window.exporter.isExporting) {
     isExporting = false;
-    console.log("Export finished");
     app.ticker.start();
   } else {
-    setTimeout(processExportFrame, 150);
+    setTimeout(processExportFrame, 30);
   }
-}
-
-function saveFrame() {
-  const dataURL = app.view.toDataURL('image/png');
-  const link = document.createElement('a');
-  link.download = `pixi_flow_${exportSessionID}_${String(exportCount + 1).padStart(3, '0')}.png`;
-  link.href = dataURL;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
 }
 
 function createGUI() {
