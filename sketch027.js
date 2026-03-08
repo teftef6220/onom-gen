@@ -29,7 +29,7 @@ var jump = true;
 var particle = true;
 
 function setup() {
-  let c = createCanvas(1980, 1080);
+  let c = createCanvas(2560, 1440);
   pixelDensity(1);
 
   // CSS設定（ウィンドウに合わせて縮小表示）
@@ -163,15 +163,15 @@ var guiConfig = [
   { variable: 'noiseScale', min: 0.001, max: 0.05, step: 0.001, name: '横ノイズ' },
   { variable: 'jump', name: 'ジャンプ' },
   { variable: 'particle', name: 'パーティクル' },
-  { variable: 'exportMP4', name: 'Start MP4 Export', type: 'function' },
-  { variable: 'exportPNG', name: 'Start PNG Sequence', type: 'function' }
+  { variable: 'startExportMP4', name: 'Start MP4 Export', type: 'function' },
+  { variable: 'startExportPNG', name: 'Start PNG Sequence', type: 'function' }
 ];
 
 async function startExportMP4() {
   if (isExporting || (window.exporter && window.exporter.isExporting)) return;
   
   let suggestedName = `sketch027_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}.mp4`;
-  await window.exporter.startMP4(width, height, 30, exportMax, suggestedName);
+  await window.exporter.startMP4(width, height, 24, exportMax, suggestedName);
   
   isExporting = true;
   currentFrame = 0; // 書き出し開始時にフレームカウントをリセットしてジャンプタイミングを合わせる
@@ -182,7 +182,7 @@ async function startExportPNG() {
   if (isExporting || (window.exporter && window.exporter.isExporting)) return;
   
   let prefix = `sketch027_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}`;
-  await window.exporter.startPNG(30, exportMax, prefix);
+  await window.exporter.startPNG(24, exportMax, prefix);
   
   isExporting = true;
   currentFrame = 0; // 書き出し開始時にフレームカウントをリセットしてジャンプタイミングを合わせる
@@ -203,3 +203,5 @@ function mousePressed() {
     noiseSeedVal = Math.random() * 10000;
   }
 }
+
+

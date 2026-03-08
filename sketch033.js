@@ -103,8 +103,8 @@ init();
 function init() {
   // 1. Pixi Applicationの作成
   app = new PIXI.Application({
-    width: 1920,
-    height: 1080,
+    width: 2560,
+    height: 1440,
     backgroundColor: 0x000000,
     antialias: true,
     preserveDrawingBuffer: true // 書き出しのために必要
@@ -357,7 +357,7 @@ async function startExportMP4() {
   
   exportMax = params.exportFrames;
   let suggestedName = `sketch033_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}.mp4`;
-  await window.exporter.startMP4(1920, 1080, 30, exportMax, suggestedName);
+  await window.exporter.startMP4(2560, 1440, 24, exportMax, suggestedName);
   
   isExporting = true;
   app.ticker.stop();
@@ -369,7 +369,7 @@ async function startExportPNG() {
   
   exportMax = params.exportFrames;
   let prefix = `sketch033_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}`;
-  await window.exporter.startPNG(30, exportMax, prefix);
+  await window.exporter.startPNG(24, exportMax, prefix);
   
   isExporting = true;
   app.ticker.stop();
@@ -396,3 +396,5 @@ function processExportFrame() {
     setTimeout(processExportFrame, 30);
   }
 }
+
+

@@ -40,7 +40,7 @@ var outline = false;
 var outlineWeight = 2;
 
 function setup() {
-  let c = createCanvas(1980, 1080);
+  let c = createCanvas(2560, 1440);
   pixelDensity(1);
 
   c.style('width', '100%');
@@ -196,15 +196,15 @@ var guiConfig = [
   { variable: 'isPopColor', name: 'POPカラー' },
   { variable: 'outline', name: 'アウトライン' },
   { variable: 'outlineWeight', min: 0.5, max: 10, step: 0.5, name: '線の太さ' },
-  { variable: 'exportMP4', name: 'Start MP4 Export', type: 'function' },
-  { variable: 'exportPNG', name: 'Start PNG Sequence', type: 'function' }
+  { variable: 'startExportMP4', name: 'Start MP4 Export', type: 'function' },
+  { variable: 'startExportPNG', name: 'Start PNG Sequence', type: 'function' }
 ];
 
 async function startExportMP4() {
   if (isExporting || (window.exporter && window.exporter.isExporting)) return;
   
   let suggestedName = `sketch030_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}.mp4`;
-  await window.exporter.startMP4(width, height, 30, exportMax, suggestedName);
+  await window.exporter.startMP4(width, height, 24, exportMax, suggestedName);
   
   isExporting = true;
   loop();
@@ -214,7 +214,7 @@ async function startExportPNG() {
   if (isExporting || (window.exporter && window.exporter.isExporting)) return;
   
   let prefix = `sketch030_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}`;
-  await window.exporter.startPNG(30, exportMax, prefix);
+  await window.exporter.startPNG(24, exportMax, prefix);
   
   isExporting = true;
   loop();
@@ -224,3 +224,5 @@ function keyPressed() {
   if (key === 'm' || key === 'M') startExportMP4();
   if (key === 'p' || key === 'P') startExportPNG();
 }
+
+

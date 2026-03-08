@@ -49,7 +49,7 @@ let gridRows = 0;
 
 function setup() {
   // WEBGLモードでキャンバス作成
-  let c = createCanvas(1920, 1080, WEBGL);
+  let c = createCanvas(2560, 1440, WEBGL);
   pixelDensity(1);
   
   // キャンバスをウィンドウ内に収めるためのCSS設定
@@ -346,7 +346,7 @@ async function startExportMP4() {
   
   exportMaxVal = params.exportMax;
   let suggestedName = `sketch042_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}.mp4`;
-  await window.exporter.startMP4(width, height, 30, exportMaxVal, suggestedName);
+  await window.exporter.startMP4(width, height, 24, exportMaxVal, suggestedName);
   
   isExporting = true;
 }
@@ -356,7 +356,7 @@ async function startExportPNG() {
   
   exportMaxVal = params.exportMax;
   let prefix = `sketch042_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}`;
-  await window.exporter.startPNG(30, exportMaxVal, prefix);
+  await window.exporter.startPNG(24, exportMaxVal, prefix);
   
   isExporting = true;
 }
@@ -375,3 +375,5 @@ function keyPressed() {
   if (key === 'm' || key === 'M') startExportMP4();
   if (key === 'p' || key === 'P') startExportPNG();
 }
+
+

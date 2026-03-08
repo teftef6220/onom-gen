@@ -60,7 +60,7 @@ let isExporting = false;
 let exportMax = 0;
 
 function setup() {
-  let c = createCanvas(1980, 1080);
+  let c = createCanvas(2560, 1440);
   pixelDensity(1);
 
   c.style('width', '100%');
@@ -69,7 +69,7 @@ function setup() {
   c.style('display', 'block');
   c.style('margin', '0 auto');
 
-  mainGraphics = createGraphics(1980, 1080);
+  mainGraphics = createGraphics(2560, 1440);
 
   strokeCap(PROJECT); // 四角い端点
   strokeJoin(MITER);  // 鋭い角
@@ -728,7 +728,7 @@ async function startExportMP4() {
   exportMax = params.exportFrames;
   let suggestedName = `crouwel_grid_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}.mp4`;
   // startMP4(width, height, fps, totalFrames, suggestedName)
-  await window.exporter.startMP4(width, height, 30, exportMax, suggestedName);
+  await window.exporter.startMP4(width, height, 24, exportMax, suggestedName);
   
   isExporting = true;
 }
@@ -739,7 +739,7 @@ async function startExportPNG() {
   exportMax = params.exportFrames;
   let prefix = `crouwel_grid_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}`;
   // startPNG(fps, totalFrames, prefix)
-  await window.exporter.startPNG(30, exportMax, prefix);
+  await window.exporter.startPNG(24, exportMax, prefix);
   
   isExporting = true;
 }
@@ -749,3 +749,5 @@ function keyPressed() {
   if (key === 'p' || key === 'P') startExportPNG();
   if (key === 'r' || key === 'R') initGrid();
 }
+
+

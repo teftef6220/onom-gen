@@ -26,7 +26,7 @@ var screenBounce = false;
 var changeBg = function() { bgType = (bgType + 1) % 4; };
 
 function setup() {
-  let c = createCanvas(1980, 1080);
+  let c = createCanvas(2560, 1440);
   pixelDensity(1);
 
   c.style('width', '100%');
@@ -297,15 +297,15 @@ var guiConfig = [
   { variable: 'physics', name: '物理演算' },
   { variable: 'boundary', name: '円形境界' },
   { variable: 'screenBounce', name: '画面端反射' },
-  { variable: 'exportMP4', name: 'Start MP4 Export', type: 'function' },
-  { variable: 'exportPNG', name: 'Start PNG Sequence', type: 'function' }
+  { variable: 'startExportMP4', name: 'Start MP4 Export', type: 'function' },
+  { variable: 'startExportPNG', name: 'Start PNG Sequence', type: 'function' }
 ];
 
 async function startExportMP4() {
   if (isExporting || (window.exporter && window.exporter.isExporting)) return;
   
   let suggestedName = `sketch028_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}.mp4`;
-  await window.exporter.startMP4(width, height, 30, exportMax, suggestedName);
+  await window.exporter.startMP4(width, height, 24, exportMax, suggestedName);
   
   isExporting = true;
   loop();
@@ -315,7 +315,7 @@ async function startExportPNG() {
   if (isExporting || (window.exporter && window.exporter.isExporting)) return;
   
   let prefix = `sketch028_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}`;
-  await window.exporter.startPNG(30, exportMax, prefix);
+  await window.exporter.startPNG(24, exportMax, prefix);
   
   isExporting = true;
   loop();
@@ -325,3 +325,5 @@ function keyPressed() {
   if (key === 'm' || key === 'M') startExportMP4();
   if (key === 'p' || key === 'P') startExportPNG();
 }
+
+

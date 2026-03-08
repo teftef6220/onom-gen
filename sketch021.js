@@ -84,11 +84,11 @@ function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x000000);
 
-  camera = new THREE.PerspectiveCamera(75, 1920 / 1080, 0.1, 1000);
+  camera = new THREE.PerspectiveCamera(75, 2560 / 1440, 0.1, 1000);
   camera.position.z = 200;
 
   renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-  renderer.setSize(1920, 1080);
+  renderer.setSize(2560, 1440);
   renderer.setPixelRatio(1);
   
   renderer.domElement.style.width = '100%';
@@ -358,8 +358,8 @@ async function startExportMP4() {
   
   exportMax = params.exportFrames;
   let suggestedName = `sketch021_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}.mp4`;
-  // Three.js renderer size is 1920x1080
-  await window.exporter.startMP4(1920, 1080, 30, exportMax, suggestedName);
+  // Three.js renderer size is 2560x1440
+  await window.exporter.startMP4(2560, 1440, 24, exportMax, suggestedName);
   
   isExporting = true;
   animate(); // 初回フレームを描画
@@ -370,8 +370,10 @@ async function startExportPNG() {
   
   exportMax = params.exportFrames;
   let prefix = `sketch021_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}`;
-  await window.exporter.startPNG(30, exportMax, prefix);
+  await window.exporter.startPNG(24, exportMax, prefix);
   
   isExporting = true;
   animate(); // 初回フレームを描画
 }
+
+

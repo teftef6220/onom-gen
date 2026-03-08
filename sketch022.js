@@ -51,8 +51,8 @@ let exportMax = 0;
 
 function init() {
   app = new PIXI.Application({
-    width: 1920,
-    height: 1080,
+    width: 2560,
+    height: 1440,
     background: params.bgColor,
     clearBeforeRender: false, // 軌跡のために自動クリアを無効化
     antialias: true,
@@ -408,8 +408,8 @@ async function startExportMP4() {
   
   exportMax = params.exportFrames;
   let suggestedName = `sketch022_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}.mp4`;
-  // PixiJS canvas size is 1920x1080
-  await window.exporter.startMP4(1920, 1080, 30, exportMax, suggestedName);
+  // PixiJS canvas size is 2560x1440
+  await window.exporter.startMP4(2560, 1440, 24, exportMax, suggestedName);
   
   isExporting = true;
   app.ticker.stop(); // 自動更新停止
@@ -421,7 +421,7 @@ async function startExportPNG() {
   
   exportMax = params.exportFrames;
   let prefix = `sketch022_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}`;
-  await window.exporter.startPNG(30, exportMax, prefix);
+  await window.exporter.startPNG(24, exportMax, prefix);
   
   isExporting = true;
   app.ticker.stop(); // 自動更新停止
@@ -472,3 +472,5 @@ function createGUI() {
 }
 
 init();
+
+

@@ -44,11 +44,11 @@ function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(params.bgColor);
 
-  camera = new THREE.PerspectiveCamera(60, 1920 / 1080, 0.1, 1000);
+  camera = new THREE.PerspectiveCamera(60, 2560 / 1440, 0.1, 1000);
   camera.position.set(0, 0, 80);
 
   renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-  renderer.setSize(1920, 1080);
+  renderer.setSize(2560, 1440);
   renderer.setPixelRatio(1);
   
   renderer.domElement.style.width = '100%';
@@ -357,7 +357,7 @@ async function startExportMP4() {
   const h = String(now.getHours()).padStart(2, '0');
   const min = String(now.getMinutes()).padStart(2, '0');
   let suggestedName = `sketch046_${y}${m}${d}_${h}${min}.mp4`;
-  await window.exporter.startMP4(1920, 1080, 30, exportMax, suggestedName);
+  await window.exporter.startMP4(2560, 1440, 24, exportMax, suggestedName);
   isExporting = true;
 }
 
@@ -371,7 +371,7 @@ async function startExportPNG() {
   const h = String(now.getHours()).padStart(2, '0');
   const min = String(now.getMinutes()).padStart(2, '0');
   let prefix = `sketch046_${y}${m}${d}_${h}${min}`;
-  await window.exporter.startPNG(30, exportMax, prefix);
+  await window.exporter.startPNG(24, exportMax, prefix);
   isExporting = true;
 }
 
@@ -380,3 +380,5 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'p' || e.key === 'P') startExportPNG();
   if (e.key === 'r' || e.key === 'R') initSystem();
 });
+
+

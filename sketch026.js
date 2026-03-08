@@ -29,7 +29,7 @@ const config = {
 };
 
 function setup() {
-  let c = createCanvas(1980, 1080);
+  let c = createCanvas(2560, 1440);
   pixelDensity(1); // 高解像度ディスプレイでも1倍で描画して負荷を下げる
   // キャンバスをウィンドウ内に収めるためのCSS設定
   c.style('width', '100%');
@@ -128,7 +128,7 @@ async function startExportMP4() {
   if (isExporting || (window.exporter && window.exporter.isExporting)) return;
   
   let suggestedName = `sketch026_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}.mp4`;
-  await window.exporter.startMP4(width, height, 30, config.exportMax, suggestedName);
+  await window.exporter.startMP4(width, height, 24, config.exportMax, suggestedName);
   
   isExporting = true;
   exportCurrent = 0;
@@ -139,7 +139,7 @@ async function startExportPNG() {
   if (isExporting || (window.exporter && window.exporter.isExporting)) return;
   
   let prefix = `sketch026_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}`;
-  await window.exporter.startPNG(30, config.exportMax, prefix);
+  await window.exporter.startPNG(24, config.exportMax, prefix);
   
   isExporting = true;
   exportCurrent = 0;
@@ -285,3 +285,6 @@ function applyGrain() {
     point(x, y);
   }
 }
+
+
+

@@ -65,7 +65,7 @@ function init() {
 
   // 2. カメラ (Orthographic for 2D look)
   // 平行投影を使うことで、遠近感をなくし、2Dグラフィックのような見た目にする
-  const aspect = 1920 / 1080;
+  const aspect = 2560 / 1440;
   const d = 12;
   camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 1000);
   camera.position.set(20, 20, 20); // アイソメトリック（等角投影）的な視点
@@ -80,7 +80,7 @@ function init() {
 
   // 3. レンダラー
   renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-  renderer.setSize(1920, 1080);
+  renderer.setSize(2560, 1440);
   renderer.setPixelRatio(1); // 書き出し用にピクセル比を1に固定
   renderer.shadowMap.enabled = true; // 影を有効化して立体感を出す
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -303,8 +303,8 @@ async function startExportMP4() {
   
   exportMax = params.exportFrames;
   let suggestedName = `sketch032_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}.mp4`;
-  // Three.js renderer size is 1920x1080
-  await window.exporter.startMP4(1920, 1080, 30, exportMax, suggestedName);
+  // Three.js renderer size is 2560x1440
+  await window.exporter.startMP4(2560, 1440, 24, exportMax, suggestedName);
   
   isExporting = true;
   render(); // 初回フレームを描画
@@ -315,7 +315,7 @@ async function startExportPNG() {
   
   exportMax = params.exportFrames;
   let prefix = `sketch032_${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}`;
-  await window.exporter.startPNG(30, exportMax, prefix);
+  await window.exporter.startPNG(24, exportMax, prefix);
   
   isExporting = true;
   render(); // 初回フレームを描画
@@ -330,3 +330,5 @@ window.addEventListener('keydown', (e) => {
     startExportPNG();
   }
 });
+
+

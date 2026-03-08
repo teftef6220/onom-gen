@@ -36,7 +36,7 @@ let isExporting = false;
 let exportMax = 0;
 
 function setup() {
-  let c = createCanvas(1920, 1080);
+  let c = createCanvas(2560, 1440);
   pixelDensity(1);
   
   c.style('width', '100%');
@@ -236,7 +236,7 @@ async function startExportMP4() {
   
   exportMax = params.exportFrames;
   let suggestedName = `sketch019_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}.mp4`;
-  await window.exporter.startMP4(width, height, 30, exportMax, suggestedName);
+  await window.exporter.startMP4(width, height, 24, exportMax, suggestedName);
   
   isExporting = true;
 }
@@ -246,7 +246,7 @@ async function startExportPNG() {
   
   exportMax = params.exportFrames;
   let prefix = `sketch019_${year()}${nf(month(),2)}${nf(day(),2)}_${nf(hour(),2)}${nf(minute(),2)}`;
-  await window.exporter.startPNG(30, exportMax, prefix);
+  await window.exporter.startPNG(24, exportMax, prefix);
   
   isExporting = true;
 }
@@ -256,3 +256,5 @@ function keyPressed() {
   if (key === 'p' || key === 'P') startExportPNG();
   if (key === 'r' || key === 'R') initGrid();
 }
+
+
